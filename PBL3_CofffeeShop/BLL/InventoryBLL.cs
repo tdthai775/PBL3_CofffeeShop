@@ -3,12 +3,19 @@ using System.Collections.Generic;
 using System.Linq;
 using PBL3_CofffeeShop.DAL;
 using PBL3_CofffeeShop.DTO;
+using PBL3_CofffeeShop.DTO.ViewModel;
 
 namespace PBL3_CofffeeShop.BLL
 {
     public class InventoryBLL
     {
         private static InventoryBLL _instance;
+        private InventoryDAL _inventoryDAL;
+
+        private InventoryBLL()
+        {
+            _inventoryDAL = InventoryDAL.Instance;
+        }
 
         public static InventoryBLL Instance
         {
@@ -20,111 +27,218 @@ namespace PBL3_CofffeeShop.BLL
             }
         }
 
-        private InventoryBLL() { }
 
+    //Xu ly
         // Lấy tất cả nguyên liệu
-        public List<Inventory> GetAllInventory()
+        public List<InventoryDisplayDTO> GetAllInventory()
         {
-            return InventoryDAL.Instance.GetAllInventory();
+            var items = _inventoryDAL.GetAllInventory();
+            return ConvertToDisplayDTO(items);
         }
 
         // Lấy nguyên liệu theo ID
-        public Inventory GetInventoryByID(string itemID)
+        public InventoryDisplayDTO GetInventoryByID(string itemID)
         {
-            return InventoryDAL.Instance.GetInventoryByID(itemID);
+            var item = _inventoryDAL.GetInventoryByID(itemID);
+            if (item == null)
+                return null;
+
+            return ConvertToDisplayDTO(item);
         }
 
         // Lấy nguyên liệu theo danh mục
-        public List<Inventory> GetInventoryByCategory(string category)
+        public List<InventoryDisplayDTO> GetInventoryByCategory(string category)
         {
-            return InventoryDAL.Instance.GetInventoryByCategory(category);
+            var items = _inventoryDAL.GetInventoryByCategory(category);
+            return ConvertToDisplayDTO(items);
         }
 
-        // Lấy nguyên liệu sắp hết
-        public List<Inventory> GetLowStockItems()
+        // Lấy các nguyên liệu sắp hết
+        public List<InventoryDisplayDTO> GetLowStockItems()
         {
-            return InventoryDAL.Instance.GetLowStockItems();
+            var items = _inventoryDAL.GetLowStockItems();
+            return ConvertToDisplayDTO(items);
         }
 
-        // Lấy nguyên liệu sắp hết hạn
-        public List<Inventory> GetExpiringItems(int days = 7)
+        // Lấy các nguyên liệu sắp hết hạn
+        public List<InventoryDisplayDTO> GetExpiringItems(int days = 7)
         {
-            return InventoryDAL.Instance.GetExpiringItems(days);
+            var items = _inventoryDAL.GetExpiringItems(days);
+            return ConvertToDisplayDTO(items);
         }
 
+        // Tìm kiếm nguyên liệu
+        public List<InventoryDisplayDTO> SearchInventory(string keyword)
+        {
+            var items = _inventoryDAL.SearchInventory(keyword);
+            return ConvertToDisplayDTO(items);
+        }
+
+        // Lấy danh sách danh mục
+        public List<string> GetCategories()
+        {
+            var categories = _inventoryDAL.GetCategories();
+            if (!categories.Contains("Tất cả"))
+                categories.Insert(0, "Tất cả");
+            return categories;
+        }
+
+        // Lấy số lượng nguyên liệu còn ít
+        public int GetLowStockCount()
+        {
+            return _inventoryDAL.GetLowStockItems().Count;
+        }
+
+        // Lấy số lượng nguyên liệu sắp hết hạn
+        public int GetExpiringItemsCount(int days = 7)
+        {
+            return _inventoryDAL.GetExpiringItems(days).Count;
+        }
+
+        // Lấy tổng số lượng nguyên liệu
+        public int GetTotalInventoryCount()
+        {
+            return _inventoryDAL.GetAllInventory().Count;
+        }
+
+        // Lấy tổng giá trị kho
+        public decimal GetTotalInventoryValue()
+        {
+            var items = _inventoryDAL.GetAllInventory();
+            return items.Sum(i => i.Quantity * i.CostPrice);
+        }
+    //
+
+
+    //Chuc nang
         // Thêm nguyên liệu mới
-        public bool AddInventoryItem(Inventory item)
+        public bool AddInventoryItem(string name, string category, decimal quantity,
+            decimal minimumQuantity, string unit, DateTime expirationDate, decimal costPrice)
         {
-            // Validate
-            if (string.IsNullOrEmpty(item.Name))
+            // Kiểm tra dữ liệu đầu vào
+            if (string.IsNullOrEmpty(name))
                 throw new Exception("Tên nguyên liệu không được để trống");
 
-            if (item.Quantity < 0)
+            if (quantity < 0)
                 throw new Exception("Số lượng không được âm");
 
-            if (item.MinimumQuantity < 0)
+            if (minimumQuantity < 0)
                 throw new Exception("Số lượng tối thiểu không được âm");
 
-            if (item.CostPrice < 0)
+            if (costPrice < 0)
                 throw new Exception("Giá nhập không được âm");
 
-            // Tạo ID nếu chưa có
-            if (string.IsNullOrEmpty(item.ItemID))
-                item.ItemID = GenerateItemID();
+            var item = new Inventory
+            {
+                ItemID = GenerateItemID(),
+                Name = name,
+                Category = category,
+                Quantity = quantity,
+                MinimumQuantity = minimumQuantity,
+                Unit = unit,
+                ExpirationDate = expirationDate,
+                CostPrice = costPrice
+            };
 
-            return InventoryDAL.Instance.AddInventoryItem(item);
+            return _inventoryDAL.AddInventoryItem(item);
         }
 
         // Cập nhật nguyên liệu
-        public bool UpdateInventoryItem(Inventory item)
+        public bool UpdateInventoryItem(string itemID, string name, string category, decimal quantity,
+            decimal minimumQuantity, string unit, DateTime expirationDate, decimal costPrice)
         {
-            // Validate
-            if (string.IsNullOrEmpty(item.ItemID))
+            // Kiểm tra dữ liệu đầu vào
+            if (string.IsNullOrEmpty(itemID))
                 throw new Exception("Mã nguyên liệu không được để trống");
 
-            if (string.IsNullOrEmpty(item.Name))
+            if (string.IsNullOrEmpty(name))
                 throw new Exception("Tên nguyên liệu không được để trống");
 
-            if (item.Quantity < 0)
+            if (quantity < 0)
                 throw new Exception("Số lượng không được âm");
 
-            if (item.MinimumQuantity < 0)
+            if (minimumQuantity < 0)
                 throw new Exception("Số lượng tối thiểu không được âm");
 
-            if (item.CostPrice < 0)
+            if (costPrice < 0)
                 throw new Exception("Giá nhập không được âm");
 
-            return InventoryDAL.Instance.UpdateInventoryItem(item);
+            var item = new Inventory
+            {
+                ItemID = itemID,
+                Name = name,
+                Category = category,
+                Quantity = quantity,
+                MinimumQuantity = minimumQuantity,
+                Unit = unit,
+                ExpirationDate = expirationDate,
+                CostPrice = costPrice
+            };
+
+            return _inventoryDAL.UpdateInventoryItem(item);
         }
 
         // Xóa nguyên liệu
         public bool DeleteInventoryItem(string itemID)
         {
             // Kiểm tra xem nguyên liệu có đang được sử dụng không
-            if (InventoryDAL.Instance.IsInventoryItemUsedInMenu(itemID))
+            if (_inventoryDAL.IsInventoryItemUsedInMenu(itemID))
                 throw new Exception("Không thể xóa nguyên liệu đang được sử dụng trong menu");
 
-            return InventoryDAL.Instance.DeleteInventoryItem(itemID);
+            return _inventoryDAL.DeleteInventoryItem(itemID);
         }
+    //
 
-        // Tìm kiếm nguyên liệu
-        public List<Inventory> SearchInventory(string keyword)
+
+    // Kiem tra
+        // Kiểm tra tồn kho
+        public bool CheckStockAvailability(string itemID, decimal requiredQuantity)
         {
-            return InventoryDAL.Instance.SearchInventory(keyword);
+            var item = _inventoryDAL.GetInventoryByID(itemID);
+            return item != null && item.Quantity >= requiredQuantity;
         }
+    //
 
-        // Lấy danh sách category
-        public List<string> GetCategories()
+
+    // BaoCao va ThongKe
+        // Lấy giá trị kho theo danh mục
+        public Dictionary<string, decimal> GetInventoryValueByCategory()
         {
-            var categories = InventoryDAL.Instance.GetCategories();
-            categories.Insert(0, "Tất cả");
-            return categories;
+            var items = _inventoryDAL.GetAllInventory();
+            return items
+                .GroupBy(i => i.Category)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Sum(i => i.Quantity * i.CostPrice)
+                );
         }
 
-        // Tạo ID mới
+        // Lấy số lượng mục theo danh mục
+        public Dictionary<string, int> GetInventoryCountByCategory()
+        {
+            var items = _inventoryDAL.GetAllInventory();
+            return items
+                .GroupBy(i => i.Category)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Count()
+                );
+        }
+        // Lấy danh sách đơn vị đo phổ biến
+        public List<string> GetCommonUnits()
+        {
+            return new List<string>
+            {
+                "Kg", "g", "L", "ml", "Gói", "Hộp", "Chai", "Lon", "Túi", "Cái", "Thùng"
+            };
+        }
+    //
+
+    // Phuong thuc ho tro
+        // Tạo mã nguyên liệu mới
         private string GenerateItemID()
         {
-            var items = GetAllInventory();
+            var items = _inventoryDAL.GetAllInventory();
             if (items.Count == 0)
                 return "INV001";
 
@@ -138,14 +252,13 @@ namespace PBL3_CofffeeShop.BLL
             return $"INV{(maxId + 1):D3}";
         }
 
-        // Kiểm tra tồn kho
-        public bool CheckStockAvailability(string itemID, decimal requiredQuantity)
+        // Định dạng số tiền
+        public static string FormatCurrency(decimal amount)
         {
-            var item = InventoryDAL.Instance.GetInventoryByID(itemID);
-            return item != null && item.Quantity >= requiredQuantity;
+            return string.Format("{0:#,##0} VNĐ", amount);
         }
 
-        // Helpers
+        // Lấy trạng thái tồn kho
         public static string GetStockStatus(Inventory item)
         {
             if (item.Quantity == 0)
@@ -156,14 +269,36 @@ namespace PBL3_CofffeeShop.BLL
                 return "Còn hàng";
         }
 
+        // Lấy số ngày còn hạn
         public static int GetDaysUntilExpiration(DateTime expirationDate)
         {
             return (expirationDate - DateTime.Now).Days;
         }
+    //
 
-        public static string FormatCurrency(decimal amount)
+    //Chuyen doi
+        // Chuyển đổi đối tượng Inventory thành DTO
+        private InventoryDisplayDTO ConvertToDisplayDTO(Inventory item)
         {
-            return string.Format("{0:N0}đ", amount);
+            return new InventoryDisplayDTO
+            {
+                ItemID = item.ItemID,
+                Name = item.Name,
+                Category = item.Category,
+                Quantity = item.Quantity,
+                MinimumQuantity = item.MinimumQuantity,
+                Unit = item.Unit,
+                ExpirationDate = item.ExpirationDate,
+                CostPrice = item.CostPrice
+            };
         }
+
+        // Chuyển đổi danh sách Inventory thành danh sách DTO
+        private List<InventoryDisplayDTO> ConvertToDisplayDTO(List<Inventory> items)
+        {
+            return items.Select(i => ConvertToDisplayDTO(i)).ToList();
+        }
+    //
+
     }
 }
