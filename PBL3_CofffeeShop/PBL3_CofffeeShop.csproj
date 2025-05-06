@@ -77,8 +77,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BLL\InventoryBLL.cs" />
+    <Compile Include="BLL\InventoryTransactionBLL.cs" />
     <Compile Include="DAL\CoffeeDbContext.cs" />
     <Compile Include="DAL\Repository\InventoryDAL.cs" />
+    <Compile Include="DAL\Repository\InventoryTransactionDAL.cs" />
     <Compile Include="DTO\BarisrtaQueues.cs" />
     <Compile Include="DTO\Discount.cs" />
     <Compile Include="DTO\Inventory.cs" />
@@ -90,6 +92,7 @@
     <Compile Include="DTO\Revenue.cs" />
     <Compile Include="DTO\RevenueDetail.cs" />
     <Compile Include="DTO\User.cs" />
+    <Compile Include="DTO\ViewModel\InventoryDTO.cs" />
     <Compile Include="GUI\Admin\fDetailKiemKho.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -216,15 +219,13 @@
     <Compile Include="GUI\Admin\ucKhoHang.Designer.cs">
       <DependentUpon>ucKhoHang.cs</DependentUpon>
     </Compile>
-    <Compile Include="Migrations\202505041244416_InitialCreate.cs" />
-    <Compile Include="Migrations\202505041244416_InitialCreate.Designer.cs">
-      <DependentUpon>202505041244416_InitialCreate.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="GUI\Admin\fDetailKiemKho.resx">
       <DependentUpon>fDetailKiemKho.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="GUI\Admin\fDetailNL.resx">
+      <DependentUpon>fDetailNL.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="GUI\Admin\fDetailThucDon.resx">
       <DependentUpon>fDetailThucDon.cs</DependentUpon>
@@ -282,9 +283,6 @@
     </EmbeddedResource>
     <EmbeddedResource Include="GUI\Login\fDangNhap.resx">
       <DependentUpon>fDangNhap.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Migrations\202505041244416_InitialCreate.resx">
-      <DependentUpon>202505041244416_InitialCreate.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
